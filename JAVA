@@ -1,0 +1,115 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+
+public class INTERFACE {
+    static File currentFile = null;
+
+    public static void main(String[] args) {
+        // Frame setup
+        JFrame frame = new JFrame("Simple Code Editor");
+        frame.setSize(900, 600);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new BorderLayout());
+
+        // Top button panel
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        String[] btnNames = {"Open", "Run", "Clear", "Choose ▼", "Save", "Save As"};
+        JButton[] buttons = new JButton[btnNames.length];
+        for (int i = 0; i < btnNames.length; i++) {
+            buttons[i] = new JButton(btnNames[i]);
+            topPanel.add(buttons[i]);
+        }
+
+        // Code text area
+        JTextArea codeArea = new JTextArea();
+        codeArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        JScrollPane codeScroll = new JScrollPane(codeArea);
+        codeScroll.setBorder(BorderFactory.createTitledBorder("Code Editor"));
+
+        // Output text area
+        JTextArea outputArea = new JTextArea();
+        outputArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        outputArea.setBackground(Color.BLACK);
+        outputArea.setForeground(Color.GREEN);
+        outputArea.setEditable(false);
+        JScrollPane outputScroll = new JScrollPane(outputArea);
+        outputScroll.setPreferredSize(new Dimension(900, 150));
+        outputScroll.setBorder(BorderFactory.createTitledBorder("Output"));
+
+        // Choose menu
+        JPopupMenu chooseMenu = new JPopupMenu();
+        JMenuItem pyOption = new JMenuItem("Python");
+        JMenuItem javaOption = new JMenuItem("Java");
+        chooseMenu.add(pyOption);
+        chooseMenu.add(javaOption);
+
+        // Action: Open
+        buttons[0].addActionListener(e -> {
+            JFileChooser fc = new JFileChooser();
+            if (fc.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
+                currentFile = fc.getSelectedFile();
+                try (BufferedReader br = new BufferedReader(new FileReader(currentFile))) {
+                    codeArea.read(br, null);
+                    outputArea.setText("Opened: " + currentFile.getName());
+                } catch (IOException ex) {
+                    outputArea.setText("Error opening file.");
+                }
+            }
+        });
+
+        // Action: Run
+        buttons[1].addActionListener(e -> {
+            outputArea.setText("Running Code...\n\n" + codeArea.getText());
+        });
+
+        // Action: Clear
+        buttons[2].addActionListener(e -> {
+            codeArea.setText("");
+            outputArea.setText("");
+        });
+
+        // Action: Choose Language
+        buttons[3].addActionListener(e -> chooseMenu.show(buttons[3], 0, buttons[3].getHeight()));
+        pyOption.addActionListener(e -> outputArea.setText("Python selected."));
+        javaOption.addActionListener(e -> outputArea.setText("Java selected."));
+
+        // Action: Save
+        buttons[4].addActionListener(e -> {
+            if (currentFile != null) {
+                try (FileWriter fw = new FileWriter(currentFile)) {
+                    codeArea.write(fw);
+                    outputArea.setText("Saved: " + currentFile.getName());
+                } catch (IOException ex) {
+                    outputArea.setText("Error saving file.");
+                }
+            } else {
+                saveAs(frame, codeArea, outputArea);
+            }
+        });
+
+        // Action: Save As
+        buttons[5].addActionListener(e -> saveAs(frame, codeArea, outputArea));
+
+        // Add components to frame
+        frame.add(topPanel, BorderLayout.NORTH);
+        frame.add(codeScroll, BorderLayout.CENTER);
+        frame.add(outputScroll, BorderLayout.SOUTH);
+        frame.setVisible(true);
+    }
+
+    // Save As method
+    static void saveAs(JFrame frame, JTextArea codeArea, JTextArea outputArea) {
+        JFileChooser fc = new JFileChooser();
+        if (fc.showSaveDialog(frame) == JFileChooser.APPROVE_OPTION) {
+            currentFile = fc.getSelectedFile();
+            try (FileWriter fw = new FileWriter(currentFile)) {
+                codeArea.write(fw);
+                outputArea.setText("Saved As: " + currentFile.getName());
+            } catch (IOException ex) {
+                outputArea.setText("Error saving file.");
+            }
+        }
+    }
+}
